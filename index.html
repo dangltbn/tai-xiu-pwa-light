@@ -1,6 +1,20 @@
 <!doctype html>
 <html lang="vi">
-<head>
+<head><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tài Xỉu PWA</title>
+
+  <!-- Khai báo manifest -->
+  <link rel="manifest" href="manifest.webmanifest">
+
+  <!-- Đăng ký Service Worker -->
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("sw.js");
+    }
+  </script>
+</head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
 <link rel="manifest" href="manifest.webmanifest">
