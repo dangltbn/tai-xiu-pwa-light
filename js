@@ -1,20 +1,18 @@
-{
-  "name": "Tài Xỉu PWA",
-  "short_name": "Tài Xỉu",
-  "start_url": "index.html",
-  "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#000000",
-  "icons": [
-    {
-      "src": "icons/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "icons/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
-  ]
-}
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches.open("tai-xiu-cache").then((cache) => {
+      return cache.addAll([
+        "/",
+        "/index.html"
+      ]);
+    })
+  );
+});
+
+self.addEventListener("fetch", (event) => {
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+      return response || fetch(event.request);
+    })
+  );
+});
