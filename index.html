@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0b1022">
+<title>Tài Xỉu — Mobile PWA</title>
+<style>
+  :root{
+    --bg:#0b1022;
+    --card:#151b33;
+    --muted:#9fb0ffcc;
+    --line:#273061;
+    --accent:#6c8bff;
+    --good:#2ecc71;
+    --bad:#ff5c5c;
+    --gold:#f3c969;
+    --radius:16px;
+    --gap:12px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;height:100%;background:var(--bg);color:#e9ecf1;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+  .app{min-height:100%;display:flex;flex-direction:column}
+  header{position:sticky;top:0;z-index:10;background:linear-gradient(180deg,#0b1022,#0b1022d9 70%,transparent);padding:14px 16px 6px}
+  .title{display:flex;align-items:center;gap:10px}
+  .title h1{margin:0;font-size:20px;letter-spacing:.3px}
+  .bank{margin-top:8px;display:flex;align-items:center;gap:10px}
+  .tag{border:1px solid var(--line);padding:4px 10px;border-radius:999px;font-size:12px;color:var(--muted)}
+  .container{flex:1;display:flex;flex-direction:column;gap:var(--gap);padding:10px 12px 22px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:12px;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+  .chipbar{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{border:1px solid var(--line);border-radius:999px;padding:10px 14px;background:#1a2141;color:#d7deff;font-weight:700}
+  .chip.active{outline:2px solid var(--accent);background:#222a55}
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  @media(min-width:520px){ .grid{grid-template-columns:repeat(3,1fr);} }
+  @media(min-width:820px){ .grid{grid-template-columns:repeat(4,1fr);} }
+
+  .bet{border:2px solid var(--line);border-radius:14px;background:linear-gradient(180deg,#1a2144,#121735);padding:12px}
+  .bet h3{margin:0 0 6px;font-size:15px}
+  .bet .payout{font-size:12px;color:var(--muted)}
+  .bet .stake{margin-top:6px;font-size:13px;color:#cdd6ff}
+  .bet.active{box-shadow:0 0 0 3px var(--accent) inset}
+
+  .dice-wrap{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:4px}
+  .die{width:70px;height:70px;border-radius:16px;background:#eff2ff;display:grid;place-items:center;color:#111;font-weight:900;font-size:30px}
+  .shake{animation:shake .8s ease-in-out 2}
+  @keyframes shake{
+    0%,100%{transform:translate(0,0) rotate(0)}
+    20%{transform:translate(2px,-2px) rotate(-6deg)}
+    40%{transform:translate(-2px,2px) rotate(6deg)}
+    60%{transform:translate(2px,2px) rotate(-4deg)}
+    80%{transform:translate(-2px,-2px) rotate(4deg)}
+  }
+
+  .actions{display:flex;gap:10px;margin-top:10px}
+  .btn{flex:1;border:0;border-radius:14px;padding:14px 16px;font-weight:800;letter-spacing:.3px}
+  .btn.primary{background:var(--accent);color:white}
+  .btn.ghost{background:transparent;color:#d7deff;border:1px solid var(--line)}
+  .footer{position:sticky;bottom:0;background:linear-gradient(0deg,#0b1022, #0b1022d9 70%, transparent);padding:12px}
+
+  .pill-row{display:flex;gap:8px;flex-wrap:wrap}
+  .pill{padding:6px 10px;border:1px solid var(--line);border-radius:999px;font-size:12px;color:var(--muted)}
+
+  .result{display:flex;align-items:center;gap:8px;margin-top:8px;font-weight:800}
+  .result .good{color:var(--good)} .result .bad{color:var(--bad)} .result .gold{color:var(--gold)}
+
+  .section-title{margin:6px 0 8px;font-size:14px;color:#c6d0ff}
+  details{border:1px solid var(--line);border-radius:14px;padding:8px 10px;background:#12183a}
+  summary{cursor:pointer;font-weight:700;color:#cdd6ff}
+
+  .log{max-height:180px;overflow:auto;font-family:ui-monospace,monospace;font-size:12px;background:#0f1430;border:1px solid var(--line);border-radius:12px;padding:10px}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="title">
+      <img src="icon-192.png" width="28" height="28" alt="logo" style="border-radius:8px;"/>
+      <h1>Tài Xỉu — Mobile</h1>
+    </div>
+    <div class="bank">
+      <span class="pill">Số dư: <b id="bank">10,000</b></span>
+      <span class="tag" id="status">Sẵn sàng</span>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="card">
+      <div class="section-title">Mệnh giá chip</div>
+      <div class="chipbar" id="chipbar"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Cược nhanh</div>
+      <div class="grid" id="quick-bets">
+        <!-- Tai, Xiu, Triple Any -->
+      </div>
+    </div>
+
+    <details class="card">
+      <summary>Cược nâng cao (Tổng, Bộ ba cụ thể, Cặp, Số đơn)</summary>
+      <div style="margin-top:10px" class="grid" id="adv-bets"></div>
+    </details>
+
+    <div class="card">
+      <div class="section-title">Bàn lắc</div>
+      <div class="dice-wrap">
+        <div class="die" id="d1">–</div>
+        <div class="die" id="d2">–</div>
+        <div class="die" id="d3">–</div>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" id="clear">Xoá cược</button>
+        <button class="btn primary" id="roll">🎲 LẮC</button>
+      </div>
+      <div class="result" id="result">Kết quả: —</div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Nhật ký</div>
+      <div class="log" id="log"></div>
+      <div class="pill-row" style="margin-top:8px">
+        <span class="pill">Tổng ván: <b id="g_total">0</b></span>
+        <span class="pill">Thắng: <b id="g_win">0</b></span>
+        <span class="pill">Thua: <b id="g_lose">0</b></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer"></div>
+</div>
+
+<script>
+(()=>{
+  // ===== CẤU HÌNH =====
+  let balance = 10000;
+  const CHIP_SET = [100,200,500,1000,2000,5000];
+  const PAY_TAI_XIU=1, PAY_TRIPLE_ANY=24, PAY_TRIPLE_SPECIFIC=150, PAY_DOUBLE=8;
+  const PAY_SINGLE=[0,1,2,3];
+  const PAY_TOTAL={4:50,17:50,5:18,16:18,6:14,15:14,7:12,14:12,8:8,13:8,9:6,10:6,11:6,12:6};
+
+  // ===== TRẠNG THÁI =====
+  let chip = CHIP_SET[0];
+  let stakes={TAI:0,XIU:0,TRIPLE_ANY:0};
+  let stakesTotal={}; for(let i=4;i<=17;i++) stakesTotal[i]=0;
+  let stakesTripleSpecific={}; for(let i=1;i<=6;i++) stakesTripleSpecific[i]=0;
+  let stakesDouble={}; for(let i=1;i<=6;i++) stakesDouble[i]=0;
+  let stakesSingle={}; for(let i=1;i<=6;i++) stakesSingle[i]=0;
+  let stats={total:0,win:0,lose:0};
+
+  // ===== DOM =====
+  const $=s=>document.querySelector(s);
+  const bankEl=$("#bank"), statusEl=$("#status");
+  const chipbar=$("#chipbar"), quickEl=$("#quick-bets"), advEl=$("#adv-bets");
+  const d1=$("#d1"), d2=$("#d2"), d3=$("#d3"), rollBtn=$("#roll"), clearBtn=$("#clear");
+  const res=$("#result"), logEl=$("#log");
+  const gT=$("#g_total"), gW=$("#g_win"), gL=$("#g_lose");
+
+  // ===== CHIP UI =====
+  CHIP_SET.forEach(v=>{
+    const b=document.createElement("button");
+    b.className="chip"+(v===chip?" active":""); b.textContent=v.toLocaleString("vi-VN");
+    b.onclick=()=>{ chip=v; [...chipbar.children].forEach(x=>x.classList.remove("active")); b.classList.add("active"); };
+    chipbar.appendChild(b);
+  });
+
+  // ===== BET BUTTON MAKER =====
+  function mkBet(id, name, pay){
+    const div=document.createElement("div");
+    div.className="bet"; div.id="bet_"+id;
+    div.innerHTML = `<h3>${name}</h3><div class="payout">Trả ${pay}</div><div class="stake">Đặt: <b id="stake_${id}">0</b></div>`;
+    div.onclick=()=>place(id);
+    return div;
+  }
+
+  // Quick bets
+  quickEl.appendChild(mkBet("TAI","TÀI (11–17)","1:1"));
+  quickEl.appendChild(mkBet("XIU","XỈU (4–10)","1:1"));
+  quickEl.appendChild(mkBet("TRIPLE_ANY","Bộ ba bất kỳ","24:1"));
+
+  // Advanced bets
+  for(let i=4;i<=17;i++) advEl.appendChild(mkBet("SUM"+i,"Tổng = "+i,(PAY_TOTAL[i]||"-")+":1"));
+  for(let i=1;i<=6;i++) advEl.appendChild(mkBet("TRIPLE"+i,`Bộ ba ${i}-${i}-${i}`,"150:1"));
+  for(let i=1;i<=6;i++) advEl.appendChild(mkBet("DOUBLE"+i,`Cặp ${i}-${i}`,"8:1"));
+  for(let i=1;i<=6;i++) advEl.appendChild(mkBet("SINGLE"+i,`Số ${i}`,"1:1 / 2:1 / 3:1"));
+
+  // ===== ĐẶT CƯỢC =====
+  function place(id){
+    if(balance<chip){ flash("Không đủ số dư"); return; }
+    balance-=chip;
+    if(id==="TAI"||id==="XIU"||id==="TRIPLE_ANY"){
+      stakes[id]+=chip; $("#stake_"+id).textContent=stakes[id];
+      $("#bet_"+id).classList.add("active");
+    }else if(id.startsWith("SUM")){
+      const n=parseInt(id.slice(3),10); stakesTotal[n]+=chip;
+      $("#stake_"+id).textContent=stakesTotal[n]; $("#bet_"+id).classList.add("active");
+    }else if(id.startsWith("TRIPLE")){
+      const n=parseInt(id.replace("TRIPLE",""),10); stakesTripleSpecific[n]+=chip;
+      $("#stake_"+id).textContent=stakesTripleSpecific[n]; $("#bet_"+id).classList.add("active");
+    }else if(id.startsWith("DOUBLE")){
+      const n=parseInt(id.replace("DOUBLE",""),10); stakesDouble[n]+=chip;
+      $("#stake_"+id).textContent=stakesDouble[n]; $("#bet_"+id).classList.add("active");
+    }else if(id.startsWith("SINGLE")){
+      const n=parseInt(id.replace("SINGLE",""),10); stakesSingle[n]+=chip;
+      $("#stake_"+id).textContent=stakesSingle[n]; $("#bet_"+id).classList.add("active");
+    }
+    render();
+  }
+
+  // ===== CLEAR =====
+  clearBtn.onclick=()=>{
+    let refund = stakes.TAI+stakes.XIU+stakes.TRIPLE_ANY;
+    for(let i=4;i<=17;i++) refund+=stakesTotal[i];
+    for(let i=1;i<=6;i++) refund+=stakesTripleSpecific[i]+stakesDouble[i]+stakesSingle[i];
+    balance+=refund;
+    stakes={TAI:0,XIU:0,TRIPLE_ANY:0};
+    for(let i=4;i<=17;i++) stakesTotal[i]=0;
+    for(let i=1;i<=6;i++){ stakesTripleSpecific[i]=0; stakesDouble[i]=0; stakesSingle[i]=0; }
+    document.querySelectorAll(".bet").forEach(b=>b.classList.remove("active"));
+    document.querySelectorAll("[id^=stake_]").forEach(s=>s.textContent=0);
+    render();
+    statusEl.textContent="Đã hoàn tiền cược";
+  };
+
+  // ===== RNG & ANIMATION =====
+  function rng(){ const a=new Uint32Array(3); crypto.getRandomValues(a); return [...a].map(v=>(v%6)+1); }
+  function animateDice(){
+    [d1,d2,d3].forEach(d=>{ d.classList.remove("shake"); void d.offsetWidth; d.classList.add("shake"); d.textContent="•"; });
+    return new Promise(r=>setTimeout(r,1600));
+  }
+
+  // ===== ROLL =====
+  rollBtn.onclick=async ()=>{
+    let totalStake = stakes.TAI+stakes.XIU+stakes.TRIPLE_ANY;
+    for(let i=4;i<=17;i++) totalStake+=stakesTotal[i];
+    for(let i=1;i<=6;i++) totalStake+=stakesTripleSpecific[i]+stakesDouble[i]+stakesSingle[i];
+    if(totalStake===0){ flash("Hãy đặt ít nhất 1 cửa"); return; }
+
+    rollBtn.disabled=true;
+    await animateDice();
+    const [a,b,c]=rng(); d1.textContent=a; d2.textContent=b; d3.textContent=c;
+    const sum=a+b+c, isTriple=(a===b&&b===c);
+    let win=0, lose=0; let parts=[];
+
+    // Tai/Xiu + Triple Any
+    if(isTriple){
+      if(stakes.TRIPLE_ANY>0){ win+=stakes.TRIPLE_ANY*(1+PAY_TRIPLE_ANY); parts.push("Bộ ba"); }
+      lose += stakes.TAI + stakes.XIU;
+    }else{
+      if(sum>=4&&sum<=10){ if(stakes.XIU>0) win+=stakes.XIU*(1+PAY_TAI_XIU); if(stakes.TAI>0) lose+=stakes.TAI; parts.push("Xỉu"); }
+      else{ if(stakes.TAI>0) win+=stakes.TAI*(1+PAY_TAI_XIU); if(stakes.XIU>0) lose+=stakes.XIU; parts.push("Tài"); }
+      if(stakes.TRIPLE_ANY>0) lose+=stakes.TRIPLE_ANY;
+    }
+
+    // Totals
+    for(let i=4;i<=17;i++){
+      const st=stakesTotal[i]; if(st>0){
+        if(sum===i){ win+=st*(1+PAY_TOTAL[i]); parts.push("Tổng "+i); }
+        else lose+=st;
+      }
+    }
+    // Triple specific
+    for(let i=1;i<=6;i++){
+      const st=stakesTripleSpecific[i]; if(st>0){
+        if(isTriple && a===i){ win+=st*(1+PAY_TRIPLE_SPECIFIC); parts.push("Bộ ba "+i); }
+        else lose+=st;
+      }
+    }
+    // Double specific
+    for(let i=1;i<=6;i++){
+      const st=stakesDouble[i]; if(st>0){
+        const cnt=[a,b,c].filter(x=>x===i).length;
+        if(cnt>=2){ win+=st*(1+PAY_DOUBLE); parts.push("Cặp "+i); }
+        else lose+=st;
+      }
+    }
+    // Single number
+    for(let i=1;i<=6;i++){
+      const st=stakesSingle[i]; if(st>0){
+        const cnt=[a,b,c].filter(x=>x===i).length;
+        if(cnt>0){ win+=st*(1+PAY_SINGLE[cnt]); parts.push(`Số ${i} (${cnt})`); }
+        else lose+=st;
+      }
+    }
+
+    balance += win;
+    stats.total++; if(win>lose) stats.win++; else if(lose>win) stats.lose++;
+
+    res.innerHTML = `🎲 ${a}-${b}-${c} (tổng ${sum}) · <span class="${win>=lose?'good':'bad'}">+${win.toLocaleString('vi-VN')}</span> / <span class="${win>=lose?'bad':'good'}">-${lose.toLocaleString('vi-VN')}</span> ${parts.length?'<span class="gold">['+parts.join(', ')+']</span>':''}`;
+    logEl.textContent = `[${new Date().toLocaleTimeString()}] ${a}-${b}-${c} (tổng ${sum}) → +${win} / -${lose} ${parts.length?('['+parts.join(', ')+']'):''}\n` + logEl.textContent;
+
+    // reset stakes
+    stakes={TAI:0,XIU:0,TRIPLE_ANY:0};
+    for(let i=4;i<=17;i++) stakesTotal[i]=0;
+    for(let i=1;i<=6;i++){ stakesTripleSpecific[i]=0; stakesDouble[i]=0; stakesSingle[i]=0; }
+    document.querySelectorAll(".bet").forEach(b=>b.classList.remove("active"));
+    document.querySelectorAll("[id^=stake_]").forEach(s=>s.textContent=0);
+
+    render();
+    rollBtn.disabled=false;
+  };
+
+  function flash(t){ statusEl.textContent=t; setTimeout(()=>statusEl.textContent="Sẵn sàng",1400); }
+  function render(){
+    bankEl.textContent = balance.toLocaleString("vi-VN");
+    gT.textContent=stats.total; gW.textContent=stats.win; gL.textContent=stats.lose;
+  }
+  render();
+
+  // PWA SW register
+  if("serviceWorker" in navigator){
+    window.addEventListener("load", ()=>{
+      navigator.serviceWorker.register("sw.js");
+    });
+  }
+})();
+</script>
+</body>
+</html>
